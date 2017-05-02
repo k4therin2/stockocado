@@ -9,6 +9,7 @@
 import threading
 from bs4 import BeautifulSoup
 import urllib
+import time
 
 class Stockocado():
 
@@ -23,8 +24,15 @@ class Stockocado():
 
 	def _listener(i, index):
 		print 'listener started on: ' + index
-		quote = i.get_quote(index)
-		print '[ ' + index + '] ' + str(round(quote,2))
+
+		while(True):
+			quote = str(round(i.get_quote(index),2))
+			print '[ ' + index + ' ] ' + quote
+			f = open(index, 'a')
+			f.write(quote)
+			f.write('\n')
+			f.close()
+			time.sleep(1)
 
 	def get_quote(self, index):
 		page = urllib.urlopen('http://nasdaq.com/symbol/' + index)
