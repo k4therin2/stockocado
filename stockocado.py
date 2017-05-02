@@ -6,6 +6,7 @@
 ## [ ] 4. Buy/Sell decision
 ## [o] 5. Thread 1-4 for multiple stocks
 
+import threading
 
 class Stockocado():
 
@@ -16,10 +17,11 @@ class Stockocado():
 	def __init__(self):
 		indexes = self.read_indexes()
 		for index in range(len(indexes)):	
-			self.start_listener_on(indexes[index])
+			threading.Thread(target=self._listener, args=(indexes[index],)).start()
 
-	def start_listener_on(self, index):
-		print index
+	def _listener(i, index):
+		print 'listener started on:' + index
+
 
 
 s = Stockocado()
