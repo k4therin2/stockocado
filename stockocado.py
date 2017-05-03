@@ -30,6 +30,12 @@ class Stockocado():
 
 	def __init__(self):
 		symbols = self.read_symbols()
+
+		# put some dolla dolla in that pocket
+		f = open('bank', 'a')
+		f.write('10000000')
+		f.close()
+
 		for index in range(len(symbols)):	
 			threading.Thread(target=self._listener, args=(symbols[index],)).start()
 
@@ -38,10 +44,6 @@ class Stockocado():
 		i.symbol = index			
 		f = open('my_' + index, 'a')
 		f.write('0')
-		f.close()
-
-		f = open('bank', 'a')
-		f.write('10000000')
 		f.close()
 
 		while(True):
@@ -133,6 +135,10 @@ class Stockocado():
 		f = open('my_' + self.symbol, 'w')
 		# How many shares do we have?		
 		existing_shares = int(f.readlines())
+		if (existing_shares == 0):
+			f.close()
+			return
+
 		f.write('0')
 		f.close()
 
