@@ -6,13 +6,13 @@ from time import gmtime, strftime
 from filelock import FileLock
 
 class Stockocado():
-	global VALUE, TIME, MONTH, DAY_LOW, DAY_HIGH
+	global VALUE, TIME, MONTH, DAY_LOW, DAY_HIGH, symbol, toggle
 	VALUE = 0
 	TIME = 1
 	MONTH = 2
 	DAY_LOW = 3
 	DAY_HIGH = 4
-	global symbol
+	toggle = 0
 
 	def read_symbols(self):
 		symbol_array = [line.rstrip('\n') for line in open('symbols.txt')]
@@ -32,11 +32,12 @@ class Stockocado():
 			threading.Thread(target=self._listener, args=(symbols[symbol],)).start()
 
 	def _listener(i, symbol):
+		# DEBUG OFF i.toggle = 0
 		print 'listener started on: ' + symbol
 		i.symbol = symbol		
 
 		# Keep track of how many shares you have	
-		f = open('my_' + symbol, 'a')
+		f = open('my_' + symbol, 'w')
 		f.write('0')
 		f.close()
 
@@ -88,7 +89,7 @@ class Stockocado():
 		return value, timestamp, month, day_low, day_high
 
 
-	def process(self, quote):
+	def process(i, quote):
 		# IF THE STOCK IS DOING BAD LONG-RUN LEAVE IT ALONE
 		# if (month_performance < 0):
 		#	return
@@ -96,69 +97,89 @@ class Stockocado():
 
 		# BUY WHEN LOW
 		if (quote[VALUE] < quote[DAY_LOW]):
+		# DEBUG OFF if (i.toggle == 0):
 			# message = "BOUGHT"
-			buy(quote)
+			i.buy(quote)
+			# DEBUG OFF i.toggle = 1
 			return 
 
 		# SELL WHEN HIGH
 		if (quote[VALUE] > quote[DAY_HIGH]):
+		# DEBUG OFF if (i.toggle == 1):
 			#message = "SOLD"
-			sell(quote)
+			i.sell(quote)
+			# DEBUG OFF i.toggle = 0
 			return
 
 		# print message
 
-	def buy(self, quote):
+	def buy(i, quote):
 		# What is $1,000 of shares?
-		shares = 1000 / value
+		shares = 1000 / quote[VALUE]
+		print "shares to buy: " + str(shares)
 
 		# open my_SYMBOL
-		f = open('my_' + self.symbol, 'w')
-		existing_shares = int(f.readlines())
+		f = open('my_' + i.symbol, 'r')
+		#print "existing shares: " + f.readlines()[0][:]
+		existing_shares = float(f.readlines()[0])
+		f.close()
+
 		# add X shares		
+		f = open('my_' + i.symbol, 'w')
 		existing_shares = existing_shares + shares
-		f.write(existing_shares)
+		f.write(str(round(existing_shares,2)))
 		f.close()
 
 		# open bank
-		with FileLock("bank"):
-			f = open('bank', 'r+')
-			# take out $1000 for X shares		
-			new_balance = int(f.readlines()) - 1000
-			f.write(new_balance)
+		# TODO: add file locks
+		# with FileLock('bank'):
+		if True:
+			f = open('bank', 'r')
+			# take out $1000 for X shares	
+			new_balance = float(f.readlines()[0]) - 1000
 			f.close()
 
-		print 'Bought ' + self.symbol + '. ' + str(shares) + ' shares.'
+			f = open('bank', 'w')
+			f.write(str(round(new_balance,2)))
+			f.close()
+
+		print 'Bought ' + i.symbol + '. ' + str(shares) + ' shares.'
 
 		# wait 5 minutes before doing another trade
-		time.sleep(60*5) 
+		time.sleep(5) 
 
-	def sell(self, quote):
+	def sell(i, quote):
 		# open my_SYMBOL
-		f = open('my_' + self.symbol, 'r+')
+		f = open('my_' + i.symbol, 'r')
 
 		# How many shares do we have?		
-		existing_shares = int(f.readlines())
-
+		existing_shares = float(f.readlines()[0])
 		# If we have no shares to sell, stop
 		if (existing_shares == 0):
 			f.close()
 			return
 
 		# Otherwise, sell
+		f.close()
+		f = open('my_' + i.symbol, 'w')
 		f.write('0')
 		f.close()
 
 		# open bank
-		with FileLock("bank"):
-			f = open('bank', 'r+')
+		# TODO add filelocks
+		# with FileLock("bank"):
+		if True:
+			f = open('bank', 'r')
 			# add value gained for X shares		
-			new_balance = int(f.readlines()) + (existing_shares * quote[VALUE])
-			f.write(new_balance)
+			new_balance = float(f.readlines()[0]) + (existing_shares * quote[VALUE])
+			f.close()
+			f = open('bank', 'w')
+			f.write(str(round(new_balance,2)))
 			f.close()
 
-		print 'Sold ' + self.symbol + '. New balance: ' + str(new_balance)
-
+		print 'Sold ' + i.symbol + '. New balance: ' + str(new_balance)
+		# wait 5 minutes before doing another trade
+		time.sleep(5)
 
 s = Stockocado()
 
