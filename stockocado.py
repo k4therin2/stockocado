@@ -1,12 +1,3 @@
-## TODO
-
-## [x] 1. Price Retriever
-## [o] 2. Price Listner
-## [ ] 3. Price Grapher/Processer
-##          [ ] Timestamps?
-## [ ] 4. Buy/Sell decision
-## [o] 5. Thread 1-4 for multiple stocks
-
 import threading
 from bs4 import BeautifulSoup
 import urllib
@@ -23,12 +14,12 @@ class Stockocado():
 	DAY_HIGH = 4
 	global symbol
 
-
 	def read_symbols(self):
-		index_array = [line.rstrip('\n') for line in open('symbols.txt')]
-		return index_array
+		symbol_array = [line.rstrip('\n') for line in open('symbols.txt')]
+		return symbol_array
 
 	def __init__(self):
+		# Get symbols of stocks to watch (CRM, NTFX, GOOG, etc.)
 		symbols = self.read_symbols()
 
 		# put some dolla dolla in that pocket
@@ -36,39 +27,44 @@ class Stockocado():
 		f.write('10000000')
 		f.close()
 
-		for index in range(len(symbols)):	
-			threading.Thread(target=self._listener, args=(symbols[index],)).start()
+		# each symbol gets their own thread
+		for symbol in range(len(symbols)):	
+			threading.Thread(target=self._listener, args=(symbols[symbol],)).start()
 
-	def _listener(i, index):
-		print 'listener started on: ' + index
-		i.symbol = index			
-		f = open('my_' + index, 'a')
+	def _listener(i, symbol):
+		print 'listener started on: ' + symbol
+		i.symbol = symbol		
+
+		# Keep track of how many shares you have	
+		f = open('my_' + symbol, 'a')
 		f.write('0')
 		f.close()
 
 		while(True):
-			# Get information
-			quote = i.get_quote(index)
+			# Get information (value, timestamp, monthly performance, current day high, current day low)
+			quote = i.get_quote(symbol)
 
 			# Print to console
 			value = quote[VALUE]
 			value = str(round(value,2))
 			timestamp = quote[TIME]
-			# print '[ ' + index + ' ] ' + value
+			# print '[ ' + symbol + ' ] ' + value
 
 			# Save information
-			# f = open(index, 'a')
+			# f = open(symbol, 'a')
 			# f.write( timestamp + '\n')
 			# f.write(value + '\n')
 			# f.close()
 
-			# Send to decide if buy/sell
+			# Decide if buy/sell/do nothing
 			i.process(quote)
 
 			time.sleep(1)
 
-	def get_quote(self, index):
-		page = urllib.urlopen('http://markets.siliconinvestor.com/siliconinvestor/quote?Symbol=' + index)
+	def get_quote(self, symbol):
+		# Get information from siliconinvestor.com
+		page = urllib.urlopen('http://markets.siliconinvestor.com/siliconinvestor/quote?Symbol=' + symbol)
+
 		# GET TIME
 		timestamp = strftime("%Y-%m-%d %H:%M:%S", gmtime())
 		soup = BeautifulSoup(page, "html.parser")
@@ -96,17 +92,19 @@ class Stockocado():
 		# IF THE STOCK IS DOING BAD LONG-RUN LEAVE IT ALONE
 		# if (month_performance < 0):
 		#	return
-		#message = "NO ACTION"
+		# message = "NO ACTION"
 
 		# BUY WHEN LOW
 		if (quote[VALUE] < quote[DAY_LOW]):
 			# message = "BOUGHT"
 			buy(quote)
+			return 
 
 		# SELL WHEN HIGH
 		if (quote[VALUE] > quote[DAY_HIGH]):
 			#message = "SOLD"
 			sell(quote)
+			return
 
 		# print message
 
@@ -138,19 +136,23 @@ class Stockocado():
 	def sell(self, quote):
 		# open my_SYMBOL
 		f = open('my_' + self.symbol, 'r+')
+
 		# How many shares do we have?		
 		existing_shares = int(f.readlines())
+
+		# If we have no shares to sell, stop
 		if (existing_shares == 0):
 			f.close()
 			return
 
+		# Otherwise, sell
 		f.write('0')
 		f.close()
 
 		# open bank
 		with FileLock("bank"):
 			f = open('bank', 'r+')
-			# add value for for X shares		
+			# add value gained for X shares		
 			new_balance = int(f.readlines()) + (existing_shares * quote[VALUE])
 			f.write(new_balance)
 			f.close()
