@@ -32,7 +32,7 @@ class Stockocado():
 		symbols = self.read_symbols()
 
 		# put some dolla dolla in that pocket
-		f = open('bank', 'a')
+		f = open('bank', 'w')
 		f.write('10000000')
 		f.close()
 
@@ -96,14 +96,19 @@ class Stockocado():
 		# IF THE STOCK IS DOING BAD LONG-RUN LEAVE IT ALONE
 		# if (month_performance < 0):
 		#	return
+		#message = "NO ACTION"
 
 		# BUY WHEN LOW
 		if (quote[VALUE] < quote[DAY_LOW]):
+			# message = "BOUGHT"
 			buy(quote)
 
 		# SELL WHEN HIGH
 		if (quote[VALUE] > quote[DAY_HIGH]):
+			#message = "SOLD"
 			sell(quote)
+
+		# print message
 
 	def buy(self, quote):
 		# What is $1,000 of shares?
@@ -119,7 +124,7 @@ class Stockocado():
 
 		# open bank
 		with FileLock("bank"):
-			f = open('bank', 'a')
+			f = open('bank', 'r+')
 			# take out $1000 for X shares		
 			new_balance = int(f.readlines()) - 1000
 			f.write(new_balance)
@@ -132,7 +137,7 @@ class Stockocado():
 
 	def sell(self, quote):
 		# open my_SYMBOL
-		f = open('my_' + self.symbol, 'w')
+		f = open('my_' + self.symbol, 'r+')
 		# How many shares do we have?		
 		existing_shares = int(f.readlines())
 		if (existing_shares == 0):
@@ -144,7 +149,7 @@ class Stockocado():
 
 		# open bank
 		with FileLock("bank"):
-			f = open('bank', 'a')
+			f = open('bank', 'r+')
 			# add value for for X shares		
 			new_balance = int(f.readlines()) + (existing_shares * quote[VALUE])
 			f.write(new_balance)
