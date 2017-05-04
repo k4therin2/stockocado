@@ -27,7 +27,6 @@ class Stockocado():
 		f = open('bank', 'w')
 		f.write('10000000')
 		f.close()
-		#self.lock = threading.Lock()
 
 		# each symbol gets their own thread
 		for symbol in range(len(symbols)):	
@@ -150,19 +149,15 @@ class Stockocado():
 		f.close()
 
 		# open bank
-		# TODO: add file locks
-		# with FileLock('bank'):
-		if True:
-			lock.acquire()
-			f = open('bank', 'r')
-			# take out $1000 for X shares	
-			new_balance = float(f.readlines()[0]) - 1000
-			f.close()
-
-			f = open('bank', 'w')
-			f.write(str(round(new_balance,2)))
-			f.close()
-			lock.release()
+		lock.acquire()
+		f = open('bank', 'r')
+		# take out $1000 for X shares	
+		new_balance = float(f.readlines()[0]) - 1000
+		f.close()
+		f = open('bank', 'w')
+		f.write(str(round(new_balance,2)))
+		f.close()
+		lock.release()
 
 		print 'Bought [' + quote[SYMBOL] + ']. ' + str(shares) + ' shares. New balance: ' + str(round(new_balance,2))
 
@@ -188,18 +183,15 @@ class Stockocado():
 		f.close()
 
 		# open bank
-		# TODO add filelocks
-		# with FileLock("bank"):
-		if True:
-			lock.acquire()
-			f = open('bank', 'r')
-			# add value gained for X shares		
-			new_balance = float(f.readlines()[0]) + (existing_shares * quote[VALUE])
-			f.close()
-			f = open('bank', 'w')
-			f.write(str(round(new_balance,2)))
-			f.close()
-			lock.release()
+		lock.acquire()
+		f = open('bank', 'r')
+		# add value gained for X shares		
+		new_balance = float(f.readlines()[0]) + (existing_shares * quote[VALUE])
+		f.close()
+		f = open('bank', 'w')
+		f.write(str(round(new_balance,2)))
+		f.close()
+		lock.release()
 
 		print '==> SOLD ==> ' + quote[SYMBOL] + '. New balance: ' + str(new_balance)
 		# wait before doing another trade

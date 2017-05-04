@@ -14,4 +14,3 @@ Stockocado starts with $10,000,000 in the bank.
 
 ## Current issues:
  1. File reading/writing - Was getting "index out of bounds" errors when opening files with mode r+ (read and overwrite), so currently am doing excessive file opening/closing specifically defining modes "r" and "w"
- 2. Running into the same issue with using Filelock, so if code runs into a race condition while accessing the bank, everything will just break.
