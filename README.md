@@ -14,3 +14,9 @@ Stockocado starts with $10,000,000 in the bank.
 
 ## Current issues:
  1. File reading/writing - Was getting "index out of bounds" errors when opening files with mode r+ (read and overwrite), so currently am doing excessive file opening/closing specifically defining modes "r" and "w"
+
+## To do:
+
+* Like... don't keep track of shares by creating a new file for each company
+* Ditto for the "bank"
+* Then write a more mature buy/sell algorithm! :-D _...ah, the naivite of youth..._
