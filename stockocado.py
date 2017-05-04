@@ -25,18 +25,32 @@ class Stockocado():
 
 		# put some dolla dolla in that pocket
 		f = open('bank', 'w')
-		f.write('10000000')
+		f.write('100000')
 		f.close()
 
 		# each symbol gets their own thread
 		for symbol in range(len(symbols)):	
 			threading.Thread(target=self._listener, args=(symbols[symbol],)).start()
 
+		threading.Thread(target=self._bank_reporter).start()
+
+	def _bank_reporter(i):		# open bank
+		while True:
+			lock.acquire()
+			f = open('bank', 'r')
+			# take out $1000 for X shares	
+			balance = float(f.readlines()[0])
+			f.close()
+			lock.release()
+			print "Current balance: " + str(balance)
+			sleep(5)
+
+
 	def _listener(i, symbol):
 		# get thread id 
 
 		# DEBUG OFF i.toggle = 0
-		print 'listener started on: ' + symbol	
+		# print 'listener started on: ' + symbol	
 
 		# Keep track of how many shares you have	
 		f = open('my_' + symbol, 'w')
@@ -50,11 +64,11 @@ class Stockocado():
 			if (len(quote) < 3):
 				# Failure if parsing issue with layout 
 				if (quote[0] == "FAILURE"):
-					print quote[1]
+					# print quote[1]
 					return
 				# Wait a bit if connection error, then try again
 				if (quote[0] == "IOError"):
-					print quote[1]
+					# print quote[1]
 					time.sleep(5)
 			else:
 				# Print to console
@@ -152,14 +166,20 @@ class Stockocado():
 		lock.acquire()
 		f = open('bank', 'r')
 		# take out $1000 for X shares	
-		new_balance = float(f.readlines()[0]) - 1000
+		new_balance = float(f.readlines()[0]) 
+		# no money? STOP GOING INTO MORE DEBT this isn't college
+		if (new_balance < 1000):
+			f.close()
+			lock.release()
+			return
+		new_balance = new_balance - 1000
 		f.close()
 		f = open('bank', 'w')
 		f.write(str(round(new_balance,2)))
 		f.close()
 		lock.release()
 
-		print 'Bought [' + quote[SYMBOL] + ']. ' + str(shares) + ' shares. New balance: ' + str(round(new_balance,2))
+		# print 'Bought [' + quote[SYMBOL] + ']. ' + str(shares) + ' shares. New balance: ' + str(round(new_balance,2))
 
 		# wait before doing another trade
 		sleep(30) 
@@ -172,7 +192,7 @@ class Stockocado():
 		existing_shares = float(f.readlines()[0])
 		# If we have no shares to sell, stop
 		if (existing_shares == 0):
-			print 'Tried to sell [' + quote[SYMBOL] +'] but we have no shares yet.'
+			# print 'Tried to sell [' + quote[SYMBOL] +'] but we have no shares yet.'
 			f.close()
 			return
 
