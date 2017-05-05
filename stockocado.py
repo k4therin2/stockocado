@@ -149,36 +149,49 @@ class Stockocado(object):
 	def buy(self, quote):
 		# What is $1,000 of shares?
 		shares = 1000 / quote[VALUE]
-		# print("shares to buy: {}".format(shares))
+		print("[{}] shares to buy: {}".format(quote[SYMBOL],shares))
 
 		# open my_SYMBOL
-		f = open('my_' + quote[SYMBOL], 'r')
+		#f = open('my_' + quote[SYMBOL], 'r')
 		#print("existing shares: ".format(f.readlines()[0][:]))
-		existing_shares = float(f.readlines()[0])
-		f.close()
+		#existing_shares = float(f.readlines()[0])
+		#f.close()
 
-		# add X shares		
-		f = open('my_' + quote[SYMBOL], 'w')
-		existing_shares = existing_shares + shares
-		f.write(str(round(existing_shares,2)))
-		f.close()
+		# add X shares	
+		with open(('my_' + quote[SYMBOL]),'r+') as infile:
+			existing_shares = float(infile.readlines()[0])
+			existing_shares = existing_shares + shares
+			infile.write(str(round(existing_shares,2)))
+
+
+		#f = open('my_' + quote[SYMBOL], 'w')
+		#existing_shares = existing_shares + shares
+		#f.write(str(round(existing_shares,2)))
+		#f.close()
 
 		# open bank
-		lock.acquire()
-		f = open('bank', 'r')
+	#	lock.acquire()
+	#	f = open('bank', 'r')
 		# take out $1000 for X shares	
-		new_balance = float(f.readlines()[0]) 
+	#	new_balance = float(f.readlines()[0]) 
 		# no money? STOP GOING INTO MORE DEBT this isn't college
-		if (new_balance < 1000):
-			f.close()
-			lock.release()
-			return
-		new_balance = new_balance - 1000
-		f.close()
-		f = open('bank', 'w')
-		f.write(str(round(new_balance,2)))
-		f.close()
-		lock.release()
+	#	if (new_balance < 1000):
+	#		f.close()
+	#		lock.release()
+	#		return
+	#	new_balance = new_balance - 1000
+	#	f.close()
+	#	f = open('bank', 'w')
+	#	f.write(str(round(new_balance,2)))
+	#	f.close()
+	#	lock.release()
+
+		with lock:
+			with open('bank', 'r+') as bank:
+				new_balance = float(bank.readlines()[0]) - 1000
+				bank.seek(0)
+				if (new_balance >= 1000):
+					bank.write(str(round(new_balance,2)))
 
 		# print('Bought [{}]. {} shares. New balance: {}'.format(quote[SYMBOL], shares, round(new_balance,2)))
 
