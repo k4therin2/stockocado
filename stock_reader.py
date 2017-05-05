@@ -1,15 +1,18 @@
-from bs4 import BeautifulSoup
-import urllib
+#!/usr/bin/env python
 
-symbol = 'NFLX'
+if __name__ == '__main__':
+	from bs4 import BeautifulSoup
+	import urllib
 
-print "Give a NASDAQ symbol:"
-symbol = raw_input()
+	symbol = 'NFLX'
 
-page = urllib.urlopen('http://nasdaq.com/symbol/' + symbol)
-soup = BeautifulSoup(page, "html.parser")
-quote_div = soup.find(id='qwidget_lastsale')
-quote = float(quote_div.contents[0][1:])
+	print "Give a NASDAQ symbol:"
+	symbol = raw_input()
 
-print quote
+	page = urllib.urlopen('http://nasdaq.com/symbol/' + symbol)
+	soup = BeautifulSoup(page, "html.parser")
+	quote_div = soup.find(id='qwidget_lastsale')
+	quote = float(quote_div.contents[0][1:])
+
+	print quote
 
