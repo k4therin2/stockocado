@@ -1,3 +1,4 @@
+from __future__ import print_function
 import threading
 from bs4 import BeautifulSoup
 import urllib
@@ -5,7 +6,7 @@ import time
 from time import sleep, gmtime, strftime
 from filelock import FileLock
 
-class Stockocado():
+class Stockocado(object):
 	global VALUE, TIME, DAY_LOW, DAY_HIGH, SYMBOL, lock, toggle
 	VALUE = 0
 	TIME = 1
@@ -42,7 +43,7 @@ class Stockocado():
 			balance = float(f.readlines()[0])
 			f.close()
 			lock.release()
-			print "Current balance: " + str(balance)
+			print("Current balance: {}".format(str(balance)))
 			sleep(5)
 
 
@@ -50,7 +51,7 @@ class Stockocado():
 		# get thread id 
 
 		# DEBUG OFF self.toggle = 0
-		# print 'listener started on: ' + symbol	
+		# print('listener started on: {}'.format(symbol))	
 
 		# Keep track of how many shares you have	
 		f = open('my_' + symbol, 'w')
@@ -64,18 +65,18 @@ class Stockocado():
 			if (len(quote) < 3):
 				# Failure if parsing issue with layout 
 				if (quote[0] == "FAILURE"):
-					# print quote[1]
+					# print(quote[1])
 					return
 				# Wait a bit if connection error, then try again
 				if (quote[0] == "IOError"):
-					# print quote[1]
+					# print(quote[1])
 					time.sleep(5)
 			else:
-				# Print to console
+				# print to console
 				# value = quote[VALUE]
 				# value = str(round(value,2))
 				# timestamp = quote[TIME]
-				# print '[ ' + symbol + ' ] ' + value
+				# print('[ {} ] {}'.format(symbol, value))
 
 				# Save information
 				# f = open(symbol, 'a')
@@ -125,7 +126,7 @@ class Stockocado():
 
 
 	def process(self, quote):
-		# print 'Processing [' + quote[SYMBOL] + ']: V L H ' + str(quote[VALUE]) + ' ' + str(quote[DAY_LOW]) + ' ' + str(quote[DAY_HIGH]) 
+		# print('Processing [{}]: V L H'.format(quote[SYMBOL], quote[VALUE], quote[DAY_LOW], quote[DAY_HIGH]))
 		
 		# BUY WHEN LOW
 		if (quote[VALUE] == quote[DAY_LOW]):
@@ -143,16 +144,16 @@ class Stockocado():
 			# DEBUG OFF self.toggle = 0
 			return
 
-		# print message
+		# print(message)
 
 	def buy(self, quote):
 		# What is $1,000 of shares?
 		shares = 1000 / quote[VALUE]
-		# print "shares to buy: " + str(shares)
+		# print("shares to buy: {}".format(shares))
 
 		# open my_SYMBOL
 		f = open('my_' + quote[SYMBOL], 'r')
-		#print "existing shares: " + f.readlines()[0][:]
+		#print("existing shares: ".format(f.readlines()[0][:]))
 		existing_shares = float(f.readlines()[0])
 		f.close()
 
@@ -179,7 +180,7 @@ class Stockocado():
 		f.close()
 		lock.release()
 
-		# print 'Bought [' + quote[SYMBOL] + ']. ' + str(shares) + ' shares. New balance: ' + str(round(new_balance,2))
+		# print('Bought [{}]. {} shares. New balance: {}'.format(quote[SYMBOL], shares, round(new_balance,2)))
 
 		# wait before doing another trade
 		sleep(30) 
@@ -192,7 +193,7 @@ class Stockocado():
 		existing_shares = float(f.readlines()[0])
 		# If we have no shares to sell, stop
 		if (existing_shares == 0):
-			# print 'Tried to sell [' + quote[SYMBOL] +'] but we have no shares yet.'
+			# print('Tried to sell [{}] but we have no shares yet.'.format(quote[SYMBOL]))
 			f.close()
 			return
 
@@ -213,7 +214,7 @@ class Stockocado():
 		f.close()
 		lock.release()
 
-		print '==> SOLD ==> ' + quote[SYMBOL] + '. New balance: ' + str(new_balance)
+		print('==> SOLD ==> {}. New balance: {}'.format(quote[SYMBOL], new_balance))
 		# wait before doing another trade
 		# sleep(5)
 
