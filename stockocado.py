@@ -26,7 +26,7 @@ class Stockocado(object):
 
 		# put some dolla dolla in that pocket
 		with open('bank', 'w') as bank:
-			bank.write('100000')
+			bank.write('10000')
 
 		# each symbol gets their own thread
 		for symbol in range(len(symbols)):	
@@ -146,6 +146,17 @@ class Stockocado(object):
 		shares = 1000 / quote[VALUE]
 		# print("[{}] shares to buy: {}".format(quote[SYMBOL],shares))
 
+		# rebalance bank
+		with lock:
+			with open('bank', 'r+') as bank:
+				new_balance = float(bank.readlines()[0]) - 1000
+				bank.seek(0)
+				# no money? STOP GOING INTO MORE DEBT this isn't college
+				if (new_balance < 1000):
+					sleep(5)
+					return
+				bank.write(str(round(new_balance,2)))
+
 		# add X shares	
 		with open(('my_' + quote[SYMBOL]),'r+') as infile:
 			existing_shares = float(infile.readlines()[0])
@@ -153,14 +164,6 @@ class Stockocado(object):
 			infile.seek(0)
 			infile.write(str(round(existing_shares,2)))
 
-		# rebalance bank
-		with lock:
-			with open('bank', 'r+') as bank:
-				new_balance = float(bank.readlines()[0]) - 1000
-				bank.seek(0)
-				# no money? STOP GOING INTO MORE DEBT this isn't college
-				if (new_balance >= 1000):
-					bank.write(str(round(new_balance,2)))
 
 		print('Bought [{}]. {} shares. New balance: {}'.format(quote[SYMBOL], shares, round(new_balance,2)))
 
