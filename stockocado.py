@@ -25,9 +25,8 @@ class Stockocado(object):
 		symbols = self.read_symbols()
 
 		# put some dolla dolla in that pocket
-		f = open('bank', 'w')
-		f.write('100000')
-		f.close()
+		with open('bank', 'w') as bank:
+			bank.write('100000')
 
 		# each symbol gets their own thread
 		for symbol in range(len(symbols)):	
@@ -37,13 +36,10 @@ class Stockocado(object):
 
 	def _bank_reporter(self):		# open bank
 		while True:
-			lock.acquire()
-			f = open('bank', 'r')
-			# take out $1000 for X shares	
-			balance = float(f.readlines()[0])
-			f.close()
-			lock.release()
-			print("Current balance: {}".format(str(balance)))
+			with lock:
+				with open('bank', 'r+') as bank:
+					balance = round(float(bank.readlines()[0]),2)
+					print("Current balance: {}".format(str(balance)))
 			sleep(5)
 
 
@@ -54,9 +50,8 @@ class Stockocado(object):
 		# print('listener started on: {}'.format(symbol))	
 
 		# Keep track of how many shares you have	
-		f = open('my_' + symbol, 'w')
-		f.write('0')
-		f.close()
+		with open('my_'+symbol, 'w') as infile:
+			infile.write('0')
 
 		while(True):
 			# Get information (value, timestamp, monthly performance, current day high, current day low)
@@ -149,87 +144,51 @@ class Stockocado(object):
 	def buy(self, quote):
 		# What is $1,000 of shares?
 		shares = 1000 / quote[VALUE]
-		print("[{}] shares to buy: {}".format(quote[SYMBOL],shares))
-
-		# open my_SYMBOL
-		#f = open('my_' + quote[SYMBOL], 'r')
-		#print("existing shares: ".format(f.readlines()[0][:]))
-		#existing_shares = float(f.readlines()[0])
-		#f.close()
+		# print("[{}] shares to buy: {}".format(quote[SYMBOL],shares))
 
 		# add X shares	
 		with open(('my_' + quote[SYMBOL]),'r+') as infile:
 			existing_shares = float(infile.readlines()[0])
 			existing_shares = existing_shares + shares
+			infile.seek(0)
 			infile.write(str(round(existing_shares,2)))
 
-
-		#f = open('my_' + quote[SYMBOL], 'w')
-		#existing_shares = existing_shares + shares
-		#f.write(str(round(existing_shares,2)))
-		#f.close()
-
-		# open bank
-	#	lock.acquire()
-	#	f = open('bank', 'r')
-		# take out $1000 for X shares	
-	#	new_balance = float(f.readlines()[0]) 
-		# no money? STOP GOING INTO MORE DEBT this isn't college
-	#	if (new_balance < 1000):
-	#		f.close()
-	#		lock.release()
-	#		return
-	#	new_balance = new_balance - 1000
-	#	f.close()
-	#	f = open('bank', 'w')
-	#	f.write(str(round(new_balance,2)))
-	#	f.close()
-	#	lock.release()
-
+		# rebalance bank
 		with lock:
 			with open('bank', 'r+') as bank:
 				new_balance = float(bank.readlines()[0]) - 1000
 				bank.seek(0)
+				# no money? STOP GOING INTO MORE DEBT this isn't college
 				if (new_balance >= 1000):
 					bank.write(str(round(new_balance,2)))
 
-		# print('Bought [{}]. {} shares. New balance: {}'.format(quote[SYMBOL], shares, round(new_balance,2)))
+		print('Bought [{}]. {} shares. New balance: {}'.format(quote[SYMBOL], shares, round(new_balance,2)))
 
 		# wait before doing another trade
-		sleep(30) 
+		sleep(5) 
 
 	def sell(self, quote):
 		# open my_SYMBOL
-		f = open('my_' + quote[SYMBOL], 'r')
+		existing_shares = 0
+		with open('my_' + quote[SYMBOL], 'r+') as infile: 
+			# How many shares do we have?		
+			existing_shares = float(infile.readlines()[0])
+			infile.seek(0)
+			# If we don't have shares to sell, exit
+			if (existing_shares < 1):
+				sleep(5)
+				return	
+			infile.write('0')
 
-		# How many shares do we have?		
-		existing_shares = float(f.readlines()[0])
-		# If we have no shares to sell, stop
-		if (existing_shares == 0):
-			# print('Tried to sell [{}] but we have no shares yet.'.format(quote[SYMBOL]))
-			f.close()
-			return
-
-		# Otherwise, sell
-		f.close()
-		f = open('my_' + quote[SYMBOL], 'w')
-		f.write('0')
-		f.close()
-
-		# open bank
-		lock.acquire()
-		f = open('bank', 'r')
-		# add value gained for X shares		
-		new_balance = float(f.readlines()[0]) + (existing_shares * quote[VALUE])
-		f.close()
-		f = open('bank', 'w')
-		f.write(str(round(new_balance,2)))
-		f.close()
-		lock.release()
+		with lock:
+			with open('bank', 'r+') as bank:
+				new_balance = float(bank.readlines()[0]) + (existing_shares * quote[VALUE])
+				bank.seek(0)
+				bank.write(str(round(new_balance,2)))
 
 		print('==> SOLD ==> {}. New balance: {}'.format(quote[SYMBOL], new_balance))
-		# wait before doing another trade
-		# sleep(5)
+
+		sleep(5)
 
 if __name__ == '__main__':
     Stockocado()
