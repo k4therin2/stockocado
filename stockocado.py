@@ -34,7 +34,7 @@ class Stockocado():
 
 		threading.Thread(target=self._bank_reporter).start()
 
-	def _bank_reporter(i):		# open bank
+	def _bank_reporter(self):		# open bank
 		while True:
 			lock.acquire()
 			f = open('bank', 'r')
@@ -46,10 +46,10 @@ class Stockocado():
 			sleep(5)
 
 
-	def _listener(i, symbol):
+	def _listener(self, symbol):
 		# get thread id 
 
-		# DEBUG OFF i.toggle = 0
+		# DEBUG OFF self.toggle = 0
 		# print 'listener started on: ' + symbol	
 
 		# Keep track of how many shares you have	
@@ -59,7 +59,7 @@ class Stockocado():
 
 		while(True):
 			# Get information (value, timestamp, monthly performance, current day high, current day low)
-			quote = i.get_quote(symbol)			
+			quote = self.get_quote(symbol)			
 
 			if (len(quote) < 3):
 				# Failure if parsing issue with layout 
@@ -84,11 +84,11 @@ class Stockocado():
 				# f.close()
 
 				# Decide if buy/sell/do nothing
-				i.process(quote)
+				self.process(quote)
 
 				# sleep(1)
 
-	def get_quote(i, symbol):
+	def get_quote(self, symbol):
 		# Get information from siliconinvestor.com
 		try:
 			page = urllib.urlopen('http://markets.siliconinvestor.com/siliconinvestor/quote?Symbol=' + symbol)
@@ -124,28 +124,28 @@ class Stockocado():
 		return value, timestamp, day_low, day_high, symbol
 
 
-	def process(i, quote):
+	def process(self, quote):
 		# print 'Processing [' + quote[SYMBOL] + ']: V L H ' + str(quote[VALUE]) + ' ' + str(quote[DAY_LOW]) + ' ' + str(quote[DAY_HIGH]) 
 		
 		# BUY WHEN LOW
 		if (quote[VALUE] == quote[DAY_LOW]):
-		# DEBUG OFF if (i.toggle == 0):
+		# DEBUG OFF if (self.toggle == 0):
 			# message = "BOUGHT"
-			i.buy(quote)
-			# DEBUG OFF i.toggle = 1
+			self.buy(quote)
+			# DEBUG OFF self.toggle = 1
 			return 
 
 		# SELL WHEN HIGH
 		if (quote[VALUE] == quote[DAY_HIGH]):
-		# DEBUG OFF if (i.toggle == 1):
+		# DEBUG OFF if (self.toggle == 1):
 			# message = "SOLD"
-			i.sell(quote)
-			# DEBUG OFF i.toggle = 0
+			self.sell(quote)
+			# DEBUG OFF self.toggle = 0
 			return
 
 		# print message
 
-	def buy(i, quote):
+	def buy(self, quote):
 		# What is $1,000 of shares?
 		shares = 1000 / quote[VALUE]
 		# print "shares to buy: " + str(shares)
@@ -184,7 +184,7 @@ class Stockocado():
 		# wait before doing another trade
 		sleep(30) 
 
-	def sell(i, quote):
+	def sell(self, quote):
 		# open my_SYMBOL
 		f = open('my_' + quote[SYMBOL], 'r')
 
