@@ -217,4 +217,5 @@ class Stockocado():
 		# wait before doing another trade
 		# sleep(5)
 
-s = Stockocado()
+if __name__ == '__main__':
+    Stockocado()
